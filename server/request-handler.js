@@ -11,8 +11,11 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-var storage = [];
+var _ = require("../node_modules/underscore/underscore.js");
+var fs = require('fs');
 
+var storage = [];
+readMessageFile();
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
@@ -63,8 +66,11 @@ var requestHandler = function(request, response) {
           json.roomname = 'Lobby';
         }
 
-        storage.push({username: json.username, message: json.message, roomname: json.roomname});
-        data = json;
+        storage.push({username: _.escape(json.username), message: _.escape(json.message), roomname: _.escape(json.roomname)});
+        fs.appendFileSync('messages.txt', JSON.stringify(storage[storage.length-1]) + "\n");
+        data = {};
+
+        response.write("success");
       });
 
       break;
@@ -107,4 +113,23 @@ var defaultCorsHeaders = {
   "access-control-max-age": 10 // Seconds.
 };
 
+function readMessageFile() {
+  fs.readFile('messages.txt', 'utf8', function(err, data){
+    debugger;
+    if (err) {
+      console.log("Error reading: " + err);
+      return;
+    }
+    var beginning = 0;
+    for(var i = 0; i < data.length; i++) {
+      if (data[i] === "\n") {
+        var message = data.slice(beginning, i);
+        beginning = i+1;
+        storage.push(JSON.parse(message));
+      }
+    }
+  });
+};
+
 exports.requestHandler = requestHandler;
+
