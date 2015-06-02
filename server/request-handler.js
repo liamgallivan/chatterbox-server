@@ -40,15 +40,14 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['content-Type'] = "application/json";
+  headers['Content-Type'] = "application/json";
 
   var url = request.url;
   var data;
 
   switch( request.method ) {
     case 'GET' :
-      if(url.indexOf('/classes') >= 0) {
-
+      if(url.match(/^\/classes/g)) {
         data = {results: storage};
       }
       else {
@@ -56,9 +55,6 @@ var requestHandler = function(request, response) {
       }
       break;
     case 'POST':
-      debugger;
-      // console.dir(request);
-      var receive;
       statusCode = 201;
       request.on('data', function(chunk) {
         var json = JSON.parse(chunk);
