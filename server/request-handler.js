@@ -39,12 +39,6 @@ var requestHandler = function(request, response) {
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
 
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = "application/json";
-
   var url = request.url;
   var data;
 
@@ -59,26 +53,28 @@ var requestHandler = function(request, response) {
       break;
     case 'POST':
       statusCode = 201;
+      var bits = "";
       request.on('data', function(chunk) {
-        var json = JSON.parse(chunk);
+        bits += chunk;
+      });
 
+      request.on('end', function(){
+        var json = JSON.parse(bits);
         if (!json.roomname) {
           json.roomname = 'Lobby';
         }
 
         storage.push({username: _.escape(json.username), message: _.escape(json.message), roomname: _.escape(json.roomname)});
         fs.appendFileSync('messages.txt', JSON.stringify(storage[storage.length-1]) + "\n");
-        data = {};
-
-        response.write("success");
+        data = json;
       });
-
       break;
     case 'PUT' :
       break;
     case 'DELETE' :
       break;
     case 'OPTIONS' :
+      data = {results: []};
       break;
   }
 
@@ -110,7 +106,12 @@ var defaultCorsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, accept",
-  "access-control-max-age": 10 // Seconds.
+  "access-control-max-age": 10, // Seconds.
+  // Tell the client we are sending them plain text.
+  //
+  // You will need to change this if you are sending something
+  // other than plain text, like JSON or HTML.
+  "Content-Type": "application/json"
 };
 
 function readMessageFile() {
